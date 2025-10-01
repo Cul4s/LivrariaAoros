@@ -8,9 +8,6 @@ import time
 import sys
 import tempfile
 
-# --------------------------
-# Configurações e paths
-# --------------------------
 ROOT = Path.cwd() / "meu_sistema_livraria"
 DATA_DIR = ROOT / "data"
 BACKUP_DIR = ROOT / "backups"
@@ -21,22 +18,14 @@ MAX_BACKUPS_TO_KEEP = 5
 CSV_EXPORT_FILE = EXPORT_DIR / "livros_exportados.csv"
 HTML_REPORT_FILE = EXPORT_DIR / "relatorio_livros.html"
 
-# --------------------------
-# Utilities: diretórios
-# --------------------------
 def ensure_directories():
-    """Garante que a estrutura de diretórios exista."""
     for p in (ROOT, DATA_DIR, BACKUP_DIR, EXPORT_DIR):
         os.makedirs(p, exist_ok=True)
 
-# --------------------------
-# Banco de dados
-# --------------------------
 def get_connection():
     return sqlite3.connect(str(DB_FILE))
 
 def init_db():
-    """Cria o banco e a tabela se não existirem."""
     ensure_directories()
     with get_connection() as conn:
         cur = conn.cursor()
@@ -51,27 +40,19 @@ def init_db():
         """)
         conn.commit()
 
-# --------------------------
-# Backups
-# --------------------------
 def backup_db(reason="manual"):
-    """Cria um backup do arquivo DB com timestamp. Retorna o caminho do backup."""
     ensure_directories()
     if not DB_FILE.exists():
-        # Se o DB ainda não existe, cria DB (inicialização) e faz um pequeno wait para garantir arquivo
         init_db()
         time.sleep(0.1)
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     backup_name = f"{BACKUP_PREFIX}{timestamp}.db"
     backup_path = BACKUP_DIR / backup_name
-    # Copia o arquivo de banco (usa shutil.copy2 para manter metadados)
     shutil.copy2(DB_FILE, backup_path)
-    # após criar backup, limpar backups antigos
     prune_old_backups()
     return backup_path
 
 def prune_old_backups():
-    """Mantém apenas os `MAX_BACKUPS_TO_KEEP` backups mais recentes."""
     backups = sorted(BACKUP_DIR.glob(f"{BACKUP_PREFIX}*.db"), key=lambda p: p.stat().st_mtime, reverse=True)
     for old in backups[MAX_BACKUPS_TO_KEEP:]:
         try:
@@ -79,9 +60,6 @@ def prune_old_backups():
         except Exception:
             pass
 
-# --------------------------
-# Validações
-# --------------------------
 def validar_ano(ano_str):
     try:
         ano = int(ano_str)
@@ -100,9 +78,6 @@ def validar_preco(preco_str):
         pass
     return None
 
-# --------------------------
-# Operações CRUD
-# --------------------------
 def adicionar_livro(titulo, autor, ano_publicacao, preco):
     backup_db(reason="adicionar")
     with get_connection() as conn:
@@ -119,7 +94,6 @@ def listar_livros():
         return cur.fetchall()
 
 def atualizar_preco_livro(livro_id, novo_preco):
-    # verifica existência
     with get_connection() as conn:
         cur = conn.cursor()
         cur.execute("SELECT id FROM livros WHERE id = ?", (livro_id,))
@@ -152,9 +126,6 @@ def buscar_por_autor(autor_query):
         cur.execute("SELECT id, titulo, autor, ano_publicacao, preco FROM livros WHERE autor LIKE ? ORDER BY id", (like,))
         return cur.fetchall()
 
-# --------------------------
-# CSV export/import
-# --------------------------
 def exportar_para_csv(path=CSV_EXPORT_FILE):
     livros = listar_livros()
     ensure_directories()
@@ -166,7 +137,6 @@ def exportar_para_csv(path=CSV_EXPORT_FILE):
     return path
 
 def importar_de_csv(csv_path):
-    """Lê CSV e insere no DB. Não faz deduplicação automática."""
     if not Path(csv_path).exists():
         raise FileNotFoundError(f"Arquivo não encontrado: {csv_path}")
     inserted = 0
@@ -185,16 +155,12 @@ def importar_de_csv(csv_path):
             preco_raw = r.get("preco") or r.get("price") or ""
             ano = validar_ano(ano_raw) if ano_raw != "" else None
             preco = validar_preco(preco_raw) if preco_raw != "" else None
-            # Insere mesmo que ano/preco estejam vazios (NULL)
             cur.execute("INSERT INTO livros (titulo, autor, ano_publicacao, preco) VALUES (?, ?, ?, ?)",
                         (titulo.strip(), autor.strip(), ano, preco))
             inserted += 1
         conn.commit()
     return inserted
 
-# --------------------------
-# Relatório HTML (extra)
-# --------------------------
 def gerar_relatorio_html(path=HTML_REPORT_FILE):
     livros = listar_livros()
     ensure_directories()
@@ -214,9 +180,6 @@ def gerar_relatorio_html(path=HTML_REPORT_FILE):
         f.write("\n".join(html))
     return path
 
-# --------------------------
-# Menu e interface
-# --------------------------
 def limpar_tela():
     if os.name == "nt":
         os.system("cls")
@@ -230,18 +193,21 @@ def menu():
     init_db()
     while True:
         limpar_tela()
-        print("=== Sistema de Gerenciamento da Livraria ===")
-        print("1. Adicionar novo livro")
-        print("2. Exibir todos os livros")
-        print("3. Atualizar preço de um livro")
-        print("4. Remover um livro")
-        print("5. Buscar livros por autor")
+        print("|=== Sistema de Gerenciamento da Livraria ===|")
+        print("")
+        print("1. Adicionar Livro")
+        print("2. Exibir Livros")
+        print("3. Atualizar preço de um Livro por ID")
+        print("4. Remover Livro")
+        print("5. Buscar Livros por autor")
         print("6. Exportar dados para CSV")
         print("7. Importar dados de CSV")
         print("8. Fazer backup manual do banco de dados")
         print("9. Gerar relatório HTML")
         print("10. Sair")
         escolha = input("Escolha uma opção: ").strip()
+        print("")
+
         if escolha == "1":
             titulo = input("Título: ").strip()
             autor = input("Autor: ").strip()
@@ -254,7 +220,7 @@ def menu():
                 ano = validar_ano(ano_str)
                 if ano is not None:
                     break
-                print("Ano inválido. Informe um ano entre 1000 e próximo ano.")
+                print("Ano inválido.")
             preco = None
             while True:
                 preco_str = input("Preço (ex: 25.50): ").strip()
@@ -272,7 +238,6 @@ def menu():
             livro_id = adicionar_livro(titulo, autor, ano, preco)
             print(f"Livro adicionado com id {livro_id}. Backup automático criado.")
             pausa()
-
         elif escolha == "2":
             livros = listar_livros()
             if not livros:
@@ -284,7 +249,6 @@ def menu():
                     preco_str = f"R$ {preco:.2f}" if (preco is not None) else ""
                     print(f"{_id:<4} {titulo[:38]:<40} {autor[:28]:<30} {str(ano) if ano else '':<6} {preco_str:>8}")
             pausa()
-
         elif escolha == "3":
             try:
                 livro_id = int(input("ID do livro a atualizar: ").strip())
@@ -305,7 +269,6 @@ def menu():
             else:
                 print("Livro não encontrado.")
             pausa()
-
         elif escolha == "4":
             try:
                 livro_id = int(input("ID do livro a remover: ").strip())
@@ -324,7 +287,6 @@ def menu():
             else:
                 print("Livro não encontrado.")
             pausa()
-
         elif escolha == "5":
             autor_q = input("Autor (parte ou nome completo): ").strip()
             if not autor_q:
@@ -339,12 +301,10 @@ def menu():
                     preco_str = f"R$ {preco:.2f}" if (preco is not None) else ""
                     print(f"[{_id}] {titulo} — {autor} ({ano if ano else 'N/A'}) {preco_str}")
             pausa()
-
         elif escolha == "6":
             path = exportar_para_csv()
             print(f"Exportado para CSV: {path}")
             pausa()
-
         elif escolha == "7":
             csv_path = input("Caminho do arquivo CSV para importar: ").strip()
             if not csv_path:
@@ -359,28 +319,21 @@ def menu():
             except Exception as e:
                 print("Erro ao importar CSV:", e)
             pausa()
-
         elif escolha == "8":
             bp = backup_db(reason="manual")
             print(f"Backup criado em: {bp}")
             pausa()
-
         elif escolha == "9":
             path = gerar_relatorio_html()
             print(f"Relatório HTML gerado em: {path}")
             pausa()
-
         elif escolha == "10":
             print("Saindo...")
             break
-
         else:
             print("Opção inválida.")
             pausa()
 
-# --------------------------
-# Inicialização quando executado como script
-# --------------------------
 if __name__ == "__main__":
     try:
         menu()
