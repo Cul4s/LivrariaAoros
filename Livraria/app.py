@@ -6,7 +6,6 @@ import csv
 from datetime import datetime
 import time
 import sys
-import tempfile
 
 ROOT = Path.cwd() / "meu_sistema_livraria"
 DATA_DIR = ROOT / "data"
@@ -119,6 +118,20 @@ def remover_livro(livro_id):
         conn.commit()
         return cur.rowcount > 0
 
+def remover_todos_livros():
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM livros")
+        count = cur.fetchone()[0]
+        if count == 0:
+            return False
+    backup_db(reason="remover_todos")
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM livros")
+        conn.commit()
+        return True
+
 def buscar_por_autor(autor_query):
     with get_connection() as conn:
         cur = conn.cursor()
@@ -193,11 +206,11 @@ def menu():
     init_db()
     while True:
         limpar_tela()
-        print("=============================================")
-        print("|                Livraria Aoros             |")
+        print("|===========================================|")
+        print("|              Livraria Aoros               |")
         print("|===========================================|")
         print("|[1] - Adicionar um Novo Livro              |")
-        print("|[2] - Exibir todos os Livros               |")
+        print("|[2] - Exibir Todos os Livros               |")
         print("|[3] - Atualizar preço de um Livro          |")
         print("|[4] - Remover Livro                        |")
         print("|[5] - Buscar Livros por Autor              |")
@@ -205,15 +218,12 @@ def menu():
         print("|[7] - Importar dados de CSV                |")
         print("|[8] - Fazer backup manual do banco de dados|")
         print("|[9] - Gerar relatório HTML                 |")
-        print("|[10] - Sair                                |")
+        print("|[10] - Remover TODOS os Livros             |")
+        print("|[11] - Sair                                |")
         print("|===========================================|")
         print("|")
-        escolha = input("ESCOLHA UMA DAS OPÇÇOES ACIMA: ").strip()
+        escolha = input("|===== ESCOLHA UMA DAS OPÇÕES ACIMA: ").strip()
         print("")
-
-escolha = input("👉Digite o Numero Desejado: ").strip()
-print()
-
 
         if escolha == "1":
             titulo = input("Título: ").strip()
@@ -335,7 +345,18 @@ print()
             print(f"Relatório HTML gerado em: {path}")
             pausa()
         elif escolha == "10":
-            print("Saindo...")
+            confirm = input("⚠ Tem certeza que deseja remover TODOS os livros? (s/N): ").strip().lower()
+            if confirm == "s":
+                ok = remover_todos_livros()
+                if ok:
+                    print("✅ Todos os livros foram removidos. Backup automático criado.")
+                else:
+                    print("⚠ Não havia livros para remover.")
+            else:
+                print("Operação cancelada.")
+            pausa()
+        elif escolha == "11":
+            print("👋 Saindo do programa...")
             break
         else:
             print("Opção inválida.")
@@ -347,6 +368,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nEncerrando (Ctrl+C).")
         sys.exit(0)
-
-
-
