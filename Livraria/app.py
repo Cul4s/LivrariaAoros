@@ -193,21 +193,22 @@ def menu():
     init_db()
     while True:
         limpar_tela()
-print("\n===========================================")
-print("               Livraria Aoros                ")
-print("===========================================\n")
-
-print(" [1] ➝ Cadastrar novo livro")
-print(" [2] ➝ Listar todos os livros")
-print(" [3] ➝ Alterar preço de um livro (ID)")
-print(" [4] ➝ Excluir livro do acervo")
-print(" [5] ➝ Procurar livros por autor")
-print(" [6] ➝ Exportar catálogo para CSV")
-print(" [7] ➝ Importar catálogo de CSV")
-print(" [8] ➝ Criar backup do banco de dados")
-print(" [9] ➝ Gerar relatório em HTML")
-print(" [10] ➝ Encerrar programa")
-print("")
+        print("=============================================")
+        print("                Livraria Aoros               ")
+        print("=============================================")
+        print("")
+        print("[1] - Adicionar um Novo Livro")
+        print("[2] - Exibir todos os Livros")
+        print("[3] - Atualizar preço de um Livro")
+        print("[4] - Remover Livro")
+        print("[5] - Buscar Livros por Autor")
+        print("[6] - Exportar dados para CSV")
+        print("[7] - Importar dados de CSV")
+        print("[8] - Fazer backup manual do banco de dados")
+        print("[9] - (Bonuses) Gerar relatório HTML")
+        print("[10] - Sair")
+        escolha = input("Escolha uma opção: ").strip()
+        print("")
 
 escolha = input("👉Digite o Numero Desejado: ").strip()
 print()
@@ -345,4 +346,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nEncerrando (Ctrl+C).")
         sys.exit(0)
+
 
