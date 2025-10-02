@@ -194,20 +194,21 @@ def menu():
     while True:
         limpar_tela()
         print("=============================================")
-        print("                Livraria Aoros               ")
-        print("=============================================")
-        print("")
-        print("[1] - Adicionar um Novo Livro")
-        print("[2] - Exibir todos os Livros")
-        print("[3] - Atualizar preço de um Livro")
-        print("[4] - Remover Livro")
-        print("[5] - Buscar Livros por Autor")
-        print("[6] - Exportar dados para CSV")
-        print("[7] - Importar dados de CSV")
-        print("[8] - Fazer backup manual do banco de dados")
-        print("[9] - (Bonuses) Gerar relatório HTML")
-        print("[10] - Sair")
-        escolha = input("Escolha uma opção: ").strip()
+        print("|                Livraria Aoros             |")
+        print("|===========================================|")
+        print("|[1] - Adicionar um Novo Livro              |")
+        print("|[2] - Exibir todos os Livros               |")
+        print("|[3] - Atualizar preço de um Livro          |")
+        print("|[4] - Remover Livro                        |")
+        print("|[5] - Buscar Livros por Autor              |")
+        print("|[6] - Exportar dados para CSV              |")
+        print("|[7] - Importar dados de CSV                |")
+        print("|[8] - Fazer backup manual do banco de dados|")
+        print("|[9] - Gerar relatório HTML                 |")
+        print("|[10] - Sair                                |")
+        print("|===========================================|")
+        print("|")
+        escolha = input("ESCOLHA UMA DAS OPÇÇOES ACIMA: ").strip()
         print("")
 
 escolha = input("👉Digite o Numero Desejado: ").strip()
@@ -346,5 +347,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nEncerrando (Ctrl+C).")
         sys.exit(0)
+
 
 
